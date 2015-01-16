@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="app_name">Server</string>
+    <string name="action_settings">Settings</string>
+    <string name="Draw_btn">画板</string>
+    <string name="Calibrate_btn">校准</string>
+</resources>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.server"
+    android:versionCode="1"
+    android:versionName="1.0">
+    
+    <!-- android:sharedUserId="android.uid.system" -->
+    
+    <!-- 开机启动广播接收权限 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> 
+    
+    <!-- USB相关注册 -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="true"/>
+    
+     <!-- Service中弹出对话框 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="21" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+        </activity>
+        
+        <!-- 画板Activity -->
+        <activity android:name="com.example.server.DrawActivity"></activity>
+        
+       	<!-- 注册接收开启启动广播消息 -->
+        <receiver android:name=".BootCompletedReceiver"> 
+		    <intent-filter> 
+		        <action android:name="android.intent.action.BOOT_COMPLETED" /> 
+		    </intent-filter> 
+		</receiver> 
+		
+       	<!-- 读数据线程注册 -->
+        <service android:enabled="true" android:name=".HidService">
+    		<!-- <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" /> -->
+        </service>
+        
+        <activity android:name="CalibrateActivity"></activity>
+        
+        
+    </application>
+
+</manifest>
