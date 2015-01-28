@@ -12,6 +12,7 @@ import java.util.TimerTask;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -265,12 +266,30 @@ public class HidService extends Service
        	Log.i(Common.TAG, "Root SUCCESS ");
         return true;
     }
-
+	
+	@SuppressWarnings("deprecation")
+	private void improvePriority() 
+	{
+	    // 我们并不需要为 notification.flags 设置 FLAG_ONGOING_EVENT，因为
+	    // 前台服务的 notification.flags 总是默认包含了那个标志位
+	    Notification notification = new Notification(R.drawable.ic_launcher,
+	        "Foreground Service Started.", System.currentTimeMillis());
+	    PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+	        new Intent(this, HidService.class), 0);
+	    notification.setLatestEventInfo(this, "Foreground Service",
+	        "Foreground Service Started.", contentIntent);
+	    // 注意使用 startForeground ，id 为 0 将不会显示 notification
+	    startForeground(1, notification);
+	}
+	
 	//开启服务 创建设备相关 这个是创建时调用
 	@Override
 	public void onCreate() {
 		// TODO Auto-generated method stub
 		super.onCreate();
+		
+		//提升进程优先级
+		improvePriority();
 		
 		//是否在申请权限
 		m_reqPermission = false;
@@ -349,6 +368,7 @@ public class HidService extends Service
 	}
 	
 	//拷贝文件到应用程序文件夹
+	@SuppressLint("SdCardPath")
 	private String CopyFile( String Filename ) throws IOException
 	{
 		// 获取应用包名  
@@ -540,13 +560,18 @@ public class HidService extends Service
 	
 	//开启服务时调用
 	@Override
-	
 	public void onStart(Intent intent, int startId) 
 	{
 		// TODO Auto-generated method stub
 		
 		
 		//MessageBox("Hid Service Started success");
+	}
+	
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		// TODO Auto-generated method stub
+		return START_STICKY;
 	}
 	
 	//关闭服务 销毁设备相关
@@ -562,6 +587,8 @@ public class HidService extends Service
 			// TODO: handle exception
 			Log.e(Common.TAG, "还没有注册!");
 		}
+		
+		stopForeground(true);
 		
 		
 		//关闭检测时钟

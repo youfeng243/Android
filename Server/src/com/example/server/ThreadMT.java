@@ -61,10 +61,13 @@ public class ThreadMT extends Thread {
 	    public float LedX[] = null;        //触摸框的坐标
 	    public float LedY[] = null;
 	    
+	    public int CurMaxNum;             //当前最大的触摸点数目 
+	    
 	    TouchData()
 	    {
 	    	TouchNum = 0;    //总共按下的点数
-
+	    	
+	    	CurMaxNum = 2;
 	 	    TouchType = new int[2];   //当前触摸模式
 	 	    TouchId   = new int[2];     //当前触摸点的ID
 
@@ -74,6 +77,23 @@ public class ThreadMT extends Thread {
 	 	    LedX = new float[2];        //触摸框的坐标
 	 	    LedY = new float[2];
 	    }
+	    
+	    public void Init( int TouchNum )
+	    {
+	    	if( TouchNum > CurMaxNum )
+	    	{
+	    		TouchType = new int[TouchNum];   //当前触摸模式
+		 	    TouchId   = new int[TouchNum];     //当前触摸点的ID
+
+		 	    TouchX = new float[TouchNum];
+		 	    TouchY = new float[TouchNum];
+
+		 	    LedX = new float[TouchNum];        //触摸框的坐标
+		 	    LedY = new float[TouchNum];
+		 	    CurMaxNum = TouchNum;
+	    	}
+	    }
+	    
 	}
 	
 	//输入到鼠标中的点
@@ -259,7 +279,6 @@ public class ThreadMT extends Thread {
 	@Override
 	public void run() 
 	{
-		int iRet = 0;
 		TouchData m_TouchData = new TouchData();
 		byte[] Data = new byte[64];
 		ByteBuffer bBuffer = ByteBuffer.allocate(64);
@@ -294,13 +313,6 @@ public class ThreadMT extends Thread {
 			return;
 		}
 		
-		//多点模式下使用
-		m_preFirstPointId = -1;
-		m_preSecondPointId = -1;
-		
-		//初始化鼠标
-		//Mouse.InitMouse();
-		
 		//正式开始进程
 		while( true )
 		{
@@ -329,7 +341,7 @@ public class ThreadMT extends Thread {
 			
 			try 
 			{
-				sleep(10);
+				sleep(2);
 			} 
 			catch (InterruptedException e)
 			{
@@ -337,388 +349,58 @@ public class ThreadMT extends Thread {
 			}
 
 		}
-		
-		//初始化释放
-		//Mouse.ReleaseMouse();
 	}
 	
-	//记录多点模式下 之前的点
-	private int m_preFirstPointId = -1;
-	private int m_preSecondPointId = -1;
-	private TouchData m_preTouchData = new TouchData();
+	/*
+	private void swap( int[] Array )
+	{
+		int temp = Array[0];
+		Array[0] = Array[1];
+		Array[1] = temp;
+	}
+	
+	private void swap( float[] Array )
+	{
+		float temp = Array[0];
+		Array[0] = Array[1];
+		Array[1] = temp;
+	}
+	*/
 	
 	//解析多点数据
 	private void MTParaMultiInput( TouchData pTouchData )
 	{
-		//当前还没有记录之前的点
-		if( m_preFirstPointId == -1 && m_preSecondPointId == -1 )
+		//先判断是否是两点
+		/*
+		if( pTouchData.TouchNum >= 2 )
 		{
-			//只有一个点
-			if( pTouchData.TouchNum == 1 )
+			if( pTouchData.TouchId[0] > pTouchData.TouchId[1] )
 			{
-				//只有当第一个点是按下才生效
-				if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-				{
-					m_preFirstPointId = pTouchData.TouchId[0];
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				return;
+				swap(pTouchData.TouchId);
+				swap(pTouchData.LedX);
+				swap(pTouchData.LedY);
+				swap(pTouchData.TouchType);
+				swap(pTouchData.TouchX);
+				swap(pTouchData.TouchY);
 			}
-			
-			if( pTouchData.TouchNum == 2 )
-			{
-				//这种情况下不进行推点
-				if( pTouchData.TouchType[0] == Mouse.TOUCH_UP &&
-					pTouchData.TouchType[1] == Mouse.TOUCH_UP )
-				{
-					return;
-				}
-				
-				if( pTouchData.TouchType[1] == Mouse.TOUCH_UP )
-				{
-					pTouchData.TouchNum = 1;
-					m_preFirstPointId = pTouchData.TouchId[0];
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				if( pTouchData.TouchType[0] == Mouse.TOUCH_UP )
-				{
-					pTouchData.LedX[0] = pTouchData.LedX[1];
-					pTouchData.LedY[0] = pTouchData.LedY[1];
-					pTouchData.TouchX[0] = pTouchData.TouchX[1];
-					pTouchData.TouchY[0] = pTouchData.TouchY[1];
-					pTouchData.TouchType[0] = pTouchData.TouchType[1];
-					pTouchData.TouchId[0] = pTouchData.TouchId[1];
-					
-					pTouchData.TouchNum = 1;
-					m_preFirstPointId = pTouchData.TouchId[0];
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				m_preFirstPointId = pTouchData.TouchId[0];
-				m_preSecondPointId = pTouchData.TouchId[1];
-				DisposeMultiinput(pTouchData);
-				return;
-			}
-			return;
 		}
-		
-		//先判断是单点 还是两点
-		if( pTouchData.TouchNum == 1 )
-		{
-			//判断当前点是UP 还是down
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				//先判断是否
-				if( pTouchData.TouchId[0] != m_preFirstPointId && 
-					pTouchData.TouchId[0] != m_preSecondPointId	)
-				{
-					if( m_preFirstPointId != -1 )
-					{
-						m_preTouchData.TouchNum = 1;
-						m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-						m_preFirstPointId = -1;
-						DisposeMultiinput(m_preTouchData);
-					}
-					
-					if( m_preSecondPointId != -1 )
-					{
-						m_preTouchData.TouchNum = 1;
-						m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-						m_preSecondPointId = -1;
-						DisposeMultiinput(m_preTouchData);
-					}
-					
-					//然后再发送点击的点
-					m_preFirstPointId = pTouchData.TouchId[0];
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				//如果与第一个点相等
-				if( pTouchData.TouchId[0] == m_preFirstPointId )
-				{
-					pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				//如果与第二个点相等
-				if( pTouchData.TouchId[0] == m_preSecondPointId )
-				{
-					pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				return;
-			}
-			
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_UP )
-			{
-				//先判断是否
-				if( pTouchData.TouchId[0] != m_preFirstPointId && 
-					pTouchData.TouchId[0] != m_preSecondPointId	)
-				{
-					if( m_preFirstPointId != -1 )
-					{
-						m_preTouchData.TouchNum = 1;
-						m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-						m_preFirstPointId = -1;
-						DisposeMultiinput(m_preTouchData);
-					}
-					
-					if( m_preSecondPointId != -1 )
-					{
-						m_preTouchData.TouchNum = 1;
-						m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-						m_preSecondPointId = -1;
-						DisposeMultiinput(m_preTouchData);
-					}
-					return;
-				}
-				
-				//如果与第一个点相等
-				if( pTouchData.TouchId[0] == m_preFirstPointId )
-				{
-					//pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-					m_preFirstPointId = -1;
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				//如果与第二个点相等
-				if( pTouchData.TouchId[0] == m_preSecondPointId )
-				{
-					//pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-					m_preSecondPointId = -1;
-					DisposeMultiinput(pTouchData);
-					return;
-				}
-				
-				return;
-			}
-			
-			return;
-		}
-		
-		//这里处理两点的情况
-		//先判断是否两个点都不是之前记录的点
-		if( pTouchData.TouchId[0] != m_preFirstPointId &&
-			pTouchData.TouchId[0] != m_preSecondPointId &&
-			pTouchData.TouchId[1] != m_preFirstPointId &&
-			pTouchData.TouchId[1] != m_preSecondPointId )
-		{
-			//先给之前的点发送结束标志UP
-			if( m_preFirstPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preFirstPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			
-			if( m_preSecondPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preSecondPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			
-			//如果两个点都是UP 则不需要处理
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_UP && 
-				pTouchData.TouchType[1] == Mouse.TOUCH_UP	)
-			{
-				return;
-			}
-			
-			//如果两个点都是Down
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN && 
-				pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				m_preFirstPointId = pTouchData.TouchId[0];
-				m_preSecondPointId = pTouchData.TouchId[1];
-				DisposeMultiinput(pTouchData);
-				return;
-			}
-			
-			//如果第一个点是down
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchNum = 1;
-				m_preFirstPointId = pTouchData.TouchId[0];
-				DisposeMultiinput(pTouchData);
-				return;
-			}
-			
-			//如果第二个点是down
-			if( pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchNum = 1;
-				pTouchData.LedX[0] = pTouchData.LedX[1];
-				pTouchData.LedY[0] = pTouchData.LedY[1];
-				pTouchData.TouchX[0] = pTouchData.TouchX[1];
-				pTouchData.TouchY[0] = pTouchData.TouchY[1];
-				pTouchData.TouchType[0] = pTouchData.TouchType[1];
-				pTouchData.TouchId[0] = pTouchData.TouchId[1];
-				m_preFirstPointId = pTouchData.TouchId[0];
-				DisposeMultiinput(pTouchData);
-				return;
-			}
-			return;
-		}
-		
-		//如果两个点都是之前记录的点
-		if( pTouchData.TouchId[0] == m_preFirstPointId &&
-			pTouchData.TouchId[1] == m_preSecondPointId )
-		{
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-			}
-			else if( pTouchData.TouchType[0] == Mouse.TOUCH_UP )
-			{
-				m_preFirstPointId = -1;
-			}
-			
-			if( pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[1] = Mouse.TOUCH_MOVE;
-			}
-			else if( pTouchData.TouchType[1] == Mouse.TOUCH_UP )
-			{
-				m_preSecondPointId = -1;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		if( pTouchData.TouchId[0] == m_preSecondPointId &&
-			pTouchData.TouchId[1] == m_preFirstPointId )
-		{
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-			}
-			else if( pTouchData.TouchType[0] == Mouse.TOUCH_UP )
-			{
-				m_preSecondPointId = -1;
-			}
-			
-			if( pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[1] = Mouse.TOUCH_MOVE;
-			}
-			else if( pTouchData.TouchType[1] == Mouse.TOUCH_UP )
-			{
-				m_preFirstPointId = -1;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		
-		//如果其中只有一个点是之前记录的点
-		if( pTouchData.TouchId[0] == m_preFirstPointId )
-		{
-			//把前一个点先发送结束标志
-			if( m_preSecondPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preSecondPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			//重新记录新点
-			m_preSecondPointId = pTouchData.TouchId[1];
-			
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		if( pTouchData.TouchId[0] == m_preSecondPointId )
-		{
-			//把前一个点先发送结束标志
-			if( m_preFirstPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preFirstPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			//重新记录新点
-			m_preFirstPointId = pTouchData.TouchId[1];
-			
-			if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[0] = Mouse.TOUCH_MOVE;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		
-		if( pTouchData.TouchId[1] == m_preFirstPointId )
-		{
-			//把前一个点先发送结束标志
-			if( m_preSecondPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preSecondPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			//重新记录新点
-			m_preSecondPointId = pTouchData.TouchId[0];
-			
-			if( pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[1] = Mouse.TOUCH_MOVE;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		if( pTouchData.TouchId[1] == m_preSecondPointId )
-		{
-			//把前一个点先发送结束标志
-			if( m_preFirstPointId != -1 )
-			{
-				m_preTouchData.TouchNum = 1;
-				m_preTouchData.TouchType[0] = Mouse.TOUCH_UP;
-				m_preFirstPointId = -1;
-				DisposeMultiinput(m_preTouchData);
-			}
-			//重新记录新点
-			m_preFirstPointId = pTouchData.TouchId[0];
-			
-			if( pTouchData.TouchType[1] == Mouse.TOUCH_DOWN )
-			{
-				pTouchData.TouchType[1] = Mouse.TOUCH_MOVE;
-			}
-			DisposeMultiinput(pTouchData);
-			return;
-		}
-		
+		*/
+		DisposeMultiinput(pTouchData);
 	}
 	
 	//临时变量
 	private int inputnum = 0;
-	private int touchid = 0;          //记录是哪一笔的ID
+	private int touchid = -1;          //记录是哪一笔的ID
 	private boolean inputflag = false;
-	private boolean rightclick = false;
 	private MouseInput downinput = new MouseInput();
-	private MouseInput tempInput = new MouseInput();
+	//private MouseInput tempInput = new MouseInput();
 	
     //推送多点消息
     private void DisposeMultiinput( TouchData pTouchData )
     {
     	int TouchX = 0;
 	    int TouchY = 0;
-	    
-    	double tempx = 0.0f;
+	    double tempx = 0.0f;
 	    double tempy = 0.0f;
     	
     	//判断第一个点是否为UP
@@ -737,217 +419,105 @@ public class ThreadMT extends Thread {
     		Log.i(Common.TAG, "发送了一个校准数据点");
     	}
     	
-    	/**
-    	 * 打印输出
-    	 * */
-    	/*
-    	Log.d("TouchDebug", "2当前点个数: " + pTouchData.TouchNum);
     	for( int i = 0; i < pTouchData.TouchNum; i++ )
     	{
-    		switch( pTouchData.TouchType[i] )
+    		if( pTouchData.TouchType[i] == Mouse.TOUCH_UP )
     		{
-    		case Mouse.TOUCH_DOWN:
-    		{
-    			Log.d("TouchDebug", "2TOUCH_DOWN");
-    		}
-    		break;
-    		 
-    		case Mouse.TOUCH_MOVE:
-    		{
-    			Log.d("TouchDebug", "2TOUCH_MOVE");
-    		}
-    		break;
-    		
-    		case Mouse.TOUCH_UP:
-    		{
-    			Log.d("TouchDebug", "2TOUCH_UP");
-    		}
-    		break;
-    		
-    		default:
-    			break;
-    		}
-    		Log.d("TouchDebug", "2TouchType[" + i + "] = " + pTouchData.TouchType[i]);
-    		Log.d("TouchDebug", "2TouchId[" + i + "] = " + pTouchData.TouchId[i]);
-    		
-    		Log.d("TouchDebug", "2TouchX[" + i + "] = " + pTouchData.TouchX[i]);
-    		Log.d("TouchDebug", "2TouchY[" + i + "] = " + pTouchData.TouchY[i]);
-    	}
-    	Log.d("TouchDebug", " ");
-    	*/
-    	
-    	//如果按下的是两个点，则直接不响应右键
-    	if( pTouchData.TouchNum >= 2 )
-    	{
-    		inputflag = false;
-    		touchid = -1;
-    	}
-    	else if( pTouchData.TouchType[0] == Mouse.TOUCH_DOWN )
-    	{
-    		//开启消息拦截
-    		inputflag = true;
-    		rightclick = false;
-    		inputnum = 0;
-    		touchid = -1;
-    	}
-    	
-    	//这里专门负责发送触摸消息
-    	for( int i = 0; i < pTouchData.TouchNum; i++ )
-    	{
-    		tempx = pTouchData.TouchX[i] / 32767.0f * m_LedWidth;
-	        tempy = pTouchData.TouchY[i] / 32767.0f * m_LedHeight;
-    		
-	        //Log.i(Common.TAG, "触摸框坐标:TouchX = " + tempx + " " + "TouchY = " + tempy);
-	        
-	        //Log.i("TouchDebug", "2第 " + (i + 1) + "个点:" + "TouchX = " + tempx + " " + "TouchY = " + tempy);
-	        
-    		switch( pTouchData.TouchType[i] )
-    		{
-    		case Mouse.TOUCH_DOWN:
-    		{
-    			//初始化队列
-    			m_MutilQueue.InitQueue(pTouchData.TouchId[i]);
-    			//添加第一个点
-    			m_MutilQueue.AddPoint(pTouchData.TouchX[i], 
-    					pTouchData.TouchY[i], pTouchData.TouchId[i], tempInput);
-    			
-    			m_CalibraInfo.xUnCalibrate = tempx;
-	            m_CalibraInfo.yUnCalibrate = tempy;
-	            
-	            //校准坐标
-	            m_calibrate.CalibrateAPoint(m_CalibraInfo);
-	            
-	            tempx = m_CalibraInfo.pCalX;
-	            tempy = m_CalibraInfo.pCalY;
-    			
-	            downinput.TouchX = tempx;
-	            downinput.TouchY = tempy;
-	            
-	            /**
-	             * 这里是没有校准的测试
-	             * */
-		        //tempx = pTouchData.TouchX[i] / 32767.0f * m_ScreenWidth;
-		        //tempy = pTouchData.TouchY[i] / 32767.0f * m_ScreenHeight;
-	            
-	            TouchX = (int)tempx;
-	            TouchY = (int)tempy;
-	            
-	            Mouse.mouse_multi_down(TouchX, TouchY, pTouchData.TouchId[i]);
-	            Log.i("TouchDebug", "Down: 4第 " + (i + 1) + "个点:" + "TouchX = " + TouchX + " " + "TouchY = " + TouchY);
-    		}
-    		break;
-    		  
-    		case Mouse.TOUCH_MOVE:
-    		{
-    			if( m_MutilQueue.AddPoint(pTouchData.TouchX[i], 
-    									  pTouchData.TouchY[i], 
-    									  pTouchData.TouchId[i], 
-    									  tempInput) == true && rightclick == false )
-    			{
-    				//坐标转换
-	                tempx = tempInput.TouchX / 32767.0f * m_LedWidth;
-	                tempy = tempInput.TouchY / 32767.0f * m_LedHeight;
-	                
-	                //Log.i("TouchDebug", "3第 " + (i + 1) + "个点:" + "TouchX = " + tempx + " " + "TouchY = " + tempy);
-	                
-	                m_CalibraInfo.xUnCalibrate = tempx;
-		            m_CalibraInfo.yUnCalibrate = tempy;
-		            
-		            //校准坐标
-		            m_calibrate.CalibrateAPoint(m_CalibraInfo);
-		            
-		            tempx = m_CalibraInfo.pCalX;
-		            tempy = m_CalibraInfo.pCalY;
- 		             
-		            /**
-		             * 这里是没有校准的测试
-		             * */
-			        //tempx = pTouchData.TouchX[i] / 32767.0f * m_ScreenWidth;
-			        //tempy = pTouchData.TouchY[i] / 32767.0f * m_ScreenHeight;
-		            
-		            TouchX = (int)tempx;
-		            TouchY = (int)tempy;
-		            
-		            //判断是否开启了拦截消息
-		            if( inputflag == true )  //如果发送右键后 就不再响应move
-		            {
-		            	int tempabsx = (int)downinput.TouchX;
-	                    int tempabsy = (int)downinput.TouchY;
-
-	                    if( Math.abs(tempabsx - TouchX) <= 15 &&
-	                    	Math.abs(tempabsy - TouchY) <= 15 )
-	                    {
-	                        inputnum++;
-	                    }
-	                    else
-	                    {
-	                        inputnum = 0;
-	                        inputflag = false;
-	                    }
-	                     
-	                    //符合右键条件
-	                    if( inputnum >= 140 )
-	                    {
-	                    	inputflag = false;
-	                        inputnum = 0;
-	                        rightclick = true;
-	                        touchid = pTouchData.TouchId[i];
-	                        
-	                        //左键先弹起
-	                        Mouse.mouse_multi_up(pTouchData.TouchId[i]);
-	                        //m_MutilQueue.DestroyQueue(pTouchData.TouchId[i]);
-	                        
-	                        //先睡200毫秒
-	                        try 
-	            			{
-	            				sleep(200);
-	            			} 
-	            			catch (InterruptedException e)
-	            			{
-	            				e.printStackTrace();
-	            			}
-	                        
-	                        //发送右键
-	                        Mouse.mouse_right_key();
-
-	                        Log.i(Common.TAG, "数据层已发送右键");
-	                        return;
-	                    }
-		            }
-		            
-		            Mouse.mouse_multi_move(TouchX, TouchY, pTouchData.TouchId[i]);
-		            Log.i("TouchDebug", "Move: 4第 " + (i + 1) + "个点:" + "TouchX = " + TouchX + " " + "TouchY = " + TouchY);
-    			}
-    		}
-    		break;
-    		
-    		case Mouse.TOUCH_UP:
-    		{
-    			//先销毁队列
-    			m_MutilQueue.DestroyQueue(pTouchData.TouchId[i]);
-    			
-    			inputnum = 0;
-	            inputflag = false;
     			if( touchid == pTouchData.TouchId[i] )
     			{
-    				if( rightclick == true )
-    	            {
-    	                rightclick = false;
-    	                touchid = -1;
-    	                return;
-    	            }
+    				touchid = -1;
+    				inputflag = false;
+    				inputnum = 0;
     			}
     			
-    			Mouse.mouse_multi_up(pTouchData.TouchId[i]);
+    			m_MutilQueue.DestroyQueue(pTouchData.TouchId[i]);
+    			//Mouse.SendMtSync();
+    			continue;
     		}
-    		break;
     		
-    		default:
-    			break;
+    		//初始化队列
+			m_MutilQueue.InitQueue(pTouchData.TouchId[i]);
     		
-    		}
+			
+			//坐标转换
+            tempx = pTouchData.TouchX[i] / 32767.0f * m_LedWidth;
+            tempy = pTouchData.TouchY[i] / 32767.0f * m_LedHeight;
+            
+            m_CalibraInfo.xUnCalibrate = tempx;
+            m_CalibraInfo.yUnCalibrate = tempy;
+            
+            //校准坐标
+            m_calibrate.CalibrateAPoint(m_CalibraInfo);
+            
+            tempx = m_CalibraInfo.pCalX;
+            tempy = m_CalibraInfo.pCalY;
+            
+            TouchX = (int)tempx;
+            TouchY = (int)tempy;
+            
+            if( touchid == -1 )
+            {
+            	//记录当前这一笔第一个点的信息
+            	touchid = pTouchData.TouchId[i];
+            	inputflag = true;
+            	inputnum = 0;
+            	
+            	//记录第一个点坐标信息
+            	downinput.TouchX = tempx;
+	            downinput.TouchY = tempy;
+            }
+            
+            //假如是两个点
+            if( pTouchData.TouchNum >= 2 )
+            {
+            	inputflag = false;
+            }
+            //如果开启了数据拦截
+            if( inputflag == true && touchid == pTouchData.TouchId[i] )
+            {
+            	int tempabsx = (int)downinput.TouchX;
+                int tempabsy = (int)downinput.TouchY;
+
+                if( Math.abs(tempabsx - TouchX) <= 15 &&
+                	Math.abs(tempabsy - TouchY) <= 15 )
+                {
+                    inputnum++;
+                }
+                else
+                {
+                    inputnum = 0;
+                    inputflag = false;
+                }
+                
+                //符合右键条件
+                    if( inputnum >= 100 )
+                    {
+                    	inputflag = false;
+ 
+                        //发送右键
+                    Mouse.mouse_right_key();
+
+                    Log.i(Common.TAG, "数据层已发送右键");
+                }
+                
+            }
+            
+    		Mouse.SendTrackId(pTouchData.TouchId[i]);
+    		Mouse.SendInput(TouchX, TouchY);
+    		//Log.i("TouchDebug", "第 " + (i + 1) + "个点:" + "TouchX = " + TouchX + " " + "TouchY = " + TouchY);
+    		Mouse.SendMtSync();
     	}
-    	
+    	//判断是否需要发送MT SYN信息
+    	if( m_MutilQueue.GetTotalUsedNum() <= 0 )
+    	{
+    		//Log.e(Common.TAG, "补偿了一个MT SYN信息");
+    		
+    		//Log.e(Common.TAG, "pTouchData.TouchNum = " + pTouchData.TouchNum);
+    		//Log.e(Common.TAG, "pTouchData.TouchType[0] = " + pTouchData.TouchType[0]);
+    		//Log.e(Common.TAG, "pTouchData.TouchType[1] = " + pTouchData.TouchType[1]);
+    		Mouse.SendMtSync();
+    	}
+    	Mouse.SendSync();
     }
 	
 	//获取数据
@@ -959,7 +529,15 @@ public class ThreadMT extends Thread {
 	        return;
 	    }
 		
-		pTouch.TouchNum = pData[63] > 2 ? 2 : pData[63];
+		pTouch.TouchNum = pData[63];
+		if( pTouch.TouchNum > 10 )
+		{
+			Log.e(Common.TAG, "数据点数超过10个了！！！！！！！！！！");
+			pTouch.TouchNum = 10;
+		}
+		
+		//判断是否多于两个点
+		pTouch.Init(pTouch.TouchNum);
 		
 		for( int i = 0; i < pTouch.TouchNum; i++ )
 	    {
@@ -996,21 +574,20 @@ public class ThreadMT extends Thread {
 	        Log.i("TouchDebug", "1第 " + (i + 1) + "个点:" + "TouchX = " + Touchx + " " + "TouchY = " + Touchy);
 	        */
 	    }
-		
-		/*
+	
 		for( int i = 0; i < 64; i++ )
 		{
 			int temp = (int)( 0xFF & pData[i] );
 			Log.d("TouchDebug", "pData[" + i + "] = " + temp );
 		}
-		*/
+		
 		
 		
 		/**
     	 * 打印输出
     	 * */
 		/*
-    	Log.d("TouchDebug", "1当前点个数: " + pTouch.TouchNum);
+    	Log.e("TouchDebug", "1当前点个数: " + pTouch.TouchNum);
     	for( int i = 0; i < pTouch.TouchNum; i++ )
     	{
     		switch( pTouch.TouchType[i] )

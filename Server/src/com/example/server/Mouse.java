@@ -26,22 +26,18 @@ public class Mouse {
 	//释放鼠标
 	public static native void ReleaseMouse();
 	
-	//发送右键点击消息
+	//发送坐标
+	public static native void SendInput(int x, int y);
+	
+	//发送ID
+	public static native void SendTrackId( int TouchId );
+	
+	//发送当前点同步信息
+	public static native void SendMtSync();
+	
+	//发送总同步信息
+	public static native void SendSync();
+	
+	//发送右键
 	public static native void mouse_right_key();
-	 
-	//发送左键消息
-	public static native void mouse_left_key( int value );
-	
-	//移动鼠标
-	public static native void mouse_move( int x, int y );
-	
-	//多点触摸
-	//按下
-	public static native void mouse_multi_down( int x, int y, int touchId );
-	
-	//移动
-	public static native void mouse_multi_move( int x, int y, int touchId );
-	
-	//弹起
-	public static native void mouse_multi_up( int touchId );
 }

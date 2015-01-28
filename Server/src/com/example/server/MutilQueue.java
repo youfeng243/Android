@@ -85,6 +85,9 @@ public class MutilQueue
 	
 	//创建四个队列
 	private Queue[] m_MutilQueue = null;
+	private int m_totalused = 0;
+	private static final int MAX_ID_NUM = 300;
+	private boolean[] m_usedid = new boolean[MAX_ID_NUM];
 	
 	public MutilQueue()
 	{	
@@ -94,26 +97,81 @@ public class MutilQueue
 		{
 			m_MutilQueue[i] = new Queue(-1);
 		}
+		m_totalused = 0;
+		
+		for( int i = 0; i < MAX_ID_NUM; i++ )
+		{
+			m_usedid[i] = false;
+		}
 		
 	}
 	
 	//初始化一个队列
 	public void InitQueue( int id )
 	{
+		//查找
+		if( id < 0 || id >= MAX_ID_NUM )
+		{
+			return;
+		}
+		
+		//判断是否已经使用了
+		if( m_usedid[id] == true )
+		{
+			return;
+		}
+		
+		/*
+		for( int i = 0; i < QUEUE_NUM; i++ )
+		{
+			if( m_MutilQueue[i].isused() == true )
+			{
+				if( m_MutilQueue[i].getid() == id )
+				{
+					return;
+				}
+			}
+		}
+		*/
+		
+		m_usedid[id] = true;
+		m_totalused++;
+		
+		/*
 		for( int i = 0; i < QUEUE_NUM; i++ )
 		{
 			if( m_MutilQueue[i].isused() == false )
 			{
 				Log.e(Common.TAG, "创建队列! id = " + id);
 				m_MutilQueue[i].init(id);
+				m_totalused++;
+				Log.e(Common.TAG, "当前使用队列数目: m_totalused = " + m_totalused);
 				break;
 			}
 		}
+		*/
 	}
 	
 	//销毁一个队列
 	public void DestroyQueue( int id )
 	{
+		//查找
+		if( id < 0 || id >= MAX_ID_NUM )
+		{
+			return;
+		}
+		
+		//判断是否已经使用了
+		if( m_usedid[id] == false )
+		{
+			return;
+		}
+		
+		m_usedid[id] = false;
+		m_totalused--;
+				
+		
+		/*
 		for( int i = 0; i < QUEUE_NUM; i++ )
 		{
 			if( m_MutilQueue[i].isused() == true )
@@ -122,10 +180,19 @@ public class MutilQueue
 				{
 					m_MutilQueue[i].destroy();
 					Log.e(Common.TAG, "销毁队列! id = " + id);
+					m_totalused--;
+					Log.e(Common.TAG, "当前使用队列数目: m_totalused = " + m_totalused);
 					break;
 				}
 			}
 		}
+		*/
+	}
+	
+	//获得当前正在使用的队列
+	public int GetTotalUsedNum( )
+	{
+		return m_totalused;
 	}
 	
 	//压入队列

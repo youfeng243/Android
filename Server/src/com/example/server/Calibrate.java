@@ -10,14 +10,14 @@ import android.util.Log;
 public class Calibrate {
 	
 	private static final String PREFS_NAME = "Calibrate";
-	 
+	
 	//校准信息
     private double m_led_x[] = new double[4];
     private double m_led_y[] = new double[4];
 
     //校准矩阵参数
     private double m_H[] = new double[8];
-    //
+
     //判断是否已经校准过
     private boolean m_CalibraFlag = false;
     

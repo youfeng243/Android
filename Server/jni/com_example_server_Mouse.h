@@ -27,10 +27,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#undef com_example_server_Mouse_MOUSE_DOWN
-#define com_example_server_Mouse_MOUSE_DOWN 1L
-#undef com_example_server_Mouse_MOUSE_UP
-#define com_example_server_Mouse_MOUSE_UP 0L
+#undef com_example_server_Mouse_LEFTKEY_DOWN
+#define com_example_server_Mouse_LEFTKEY_DOWN 1L
+#undef com_example_server_Mouse_LEFTKEY_UP
+#define com_example_server_Mouse_LEFTKEY_UP 0L
 #undef com_example_server_Mouse_TOUCH_DOWN
 #define com_example_server_Mouse_TOUCH_DOWN 3L
 #undef com_example_server_Mouse_TOUCH_MOVE
@@ -55,51 +55,43 @@ JNIEXPORT void JNICALL Java_com_example_server_Mouse_ReleaseMouse
 
 /*
  * Class:     com_example_server_Mouse
+ * Method:    SendInput
+ * Signature: (II)V
+ */
+JNIEXPORT void JNICALL Java_com_example_server_Mouse_SendInput
+  (JNIEnv *, jclass, jint, jint);
+
+/*
+ * Class:     com_example_server_Mouse
+ * Method:    SendTrackId
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_com_example_server_Mouse_SendTrackId
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     com_example_server_Mouse
+ * Method:    SendMtSync
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_example_server_Mouse_SendMtSync
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_example_server_Mouse
+ * Method:    SendSync
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_example_server_Mouse_SendSync
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_example_server_Mouse
  * Method:    mouse_right_key
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1right_1key
   (JNIEnv *, jclass);
-
-/*
- * Class:     com_example_server_Mouse
- * Method:    mouse_left_key
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1left_1key
-  (JNIEnv *, jclass, jint);
-
-/*
- * Class:     com_example_server_Mouse
- * Method:    mouse_move
- * Signature: (II)V
- */
-JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1move
-  (JNIEnv *, jclass, jint, jint);
-
-/*
- * Class:     com_example_server_Mouse
- * Method:    mouse_multi_down
- * Signature: (III)V
- */
-JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1multi_1down
-  (JNIEnv *, jclass, jint, jint, jint);
-
-/*
- * Class:     com_example_server_Mouse
- * Method:    mouse_multi_move
- * Signature: (III)V
- */
-JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1multi_1move
-  (JNIEnv *, jclass, jint, jint, jint);
-
-/*
- * Class:     com_example_server_Mouse
- * Method:    mouse_multi_up
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_com_example_server_Mouse_mouse_1multi_1up
-  (JNIEnv *, jclass, jint);
 
 #ifdef __cplusplus
 }
